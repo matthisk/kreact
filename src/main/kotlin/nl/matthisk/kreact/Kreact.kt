@@ -1,6 +1,6 @@
 package nl.matthisk.kreact
 
-import kotlin.reflect.KClass
+var current: Builder? = null
 
 open class Builder {
     val childList = mutableListOf<Element>()
@@ -18,6 +18,11 @@ open class Builder {
         }
     }
 
+    fun <T> useState(initialState: T): State<T> {
+        println("Initializing useState $initialState")
+        return State(initialState)
+    }
+
     operator fun Element.unaryPlus() {
         childList.add(this)
     }
@@ -26,6 +31,8 @@ open class Builder {
         childList.add(TextElement(this))
     }
 }
+
+class State<T>(var value: T)
 
 open class Element()
 
@@ -48,29 +55,34 @@ fun renderToString(e: Element): String {
     }
 }
 
-abstract class Component<Props, State>() {
-    abstract var state : State
-
-    abstract fun render(): Element
-}
-
-class Counter(): Component<Nothing, Int>() {
-    override var state = 0
-
-    override fun render(): Element {
-        return jsx {
-            div {
-                button { attrs.value = "Increase" }
-                button { attrs.value = "Decrease" }
-                p { +"value is: $state" }
-            }
-        }
-    }
-}
-
 fun greetings(name: String): Element {
     return jsx {
         h1 { +"Hello $name" }
+    }
+}
+
+fun page(title: String, children: Builder.() -> Unit): Element {
+    return jsx {
+        h1 { +title }
+        div { children() }
+    }
+}
+
+fun counter(): Element {
+    return jsx {
+        val state = useState(0)
+
+        div {
+            p {
+                +"Counter value: ${state.value}"
+            }
+            button {
+                +"Increment"
+            }
+            button {
+                +"Decrement"
+            }
+        }
     }
 }
 
@@ -81,7 +93,10 @@ fun page(): Element {
                 title("KReact Development")
             }
             body {
-                +greetings("Matthisk")
+                +page("Kreact") {
+                    +greetings("Matthisk")
+                    +counter()
+                }
             }
         }
     }
