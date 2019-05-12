@@ -49,7 +49,7 @@ open class DOMBuilder<out T : Tag>(factory: (TagConsumer<Unit>) -> T) : Builder(
     }
 
     val attrs = factory(consumer)
-    val props = {}
+    val props = null
 
     open fun create() = KReactElement(attrs.tagName, props, childList)
 }
