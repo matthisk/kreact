@@ -1,6 +1,6 @@
 package nl.matthisk.kreact
 
-var current: Builder? = null
+import kotlin.reflect.KClass
 
 open class Builder {
     val childList = mutableListOf<Element>()
@@ -8,6 +8,10 @@ open class Builder {
     fun child(element: KReactElement): KReactElement {
         childList.add(element)
         return element
+    }
+
+    fun <P, C : Component<P, *>> child(factory: (props: P) -> C, props: P) {
+        factory(props).renderMe(this)
     }
 
     fun createElement(): Element {
@@ -102,8 +106,58 @@ fun page(): Element {
     }
 }
 
+abstract class Component<P, S>(props: P) {
+    abstract fun Builder.render()
+
+    fun renderMe(builder: Builder) = builder.render()
+}
+
+class Counter(props: Nothing?) : Component<Nothing?, Any>(props) {
+    override fun Builder.render() {
+        div {
+            p {
+                +"Counter value: ${0}"
+            }
+            button {
+                +"Increment"
+            }
+            button {
+                +"Decrement"
+            }
+        }
+    }
+}
+
+fun Builder.counter(initialValue: Int): Element {
+    val state = useState(initialValue)
+
+    return div {
+        p {
+            +"Counter value: ${state.value}"
+        }
+        button {
+            +"Increment"
+        }
+        button {
+            +"Decrement"
+        }
+    }
+}
+
+fun Builder.page(): Element = html {
+    head {
+        title("KReact Development")
+    }
+    body {
+        child(::Counter, null)
+    }
+}
+
 fun main(args: Array<String>) {
-    val element = page()
+    val element = jsx {
+        page()
+    }
+
     var content = renderToString(element);
 
     println(content)
